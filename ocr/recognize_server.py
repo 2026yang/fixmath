@@ -206,7 +206,35 @@ def _bundled_model_root():
     return None
 
 
+def _bypass_pix2text_init() -> None:
+    """Load pix2text.latex_ocr without executing pix2text/__init__.py.
+
+    The package __init__ imports layout/table OCR, which pulls in pandas and
+    other optional dependencies.  Some Windows machines block pandas' native
+    DLL via application-control policy, even though LaTeX OCR never uses it.
+    Registering a namespace package with the real __path__ lets Python import
+    the latex_ocr submodule directly.
+    """
+    import importlib.util
+    import sys
+    import types
+
+    if "pix2text" in sys.modules:
+        return
+    try:
+        spec = importlib.util.find_spec("pix2text")
+    except Exception:  # noqa: BLE001
+        return
+    if spec is None or not spec.submodule_search_locations:
+        return
+    package = types.ModuleType("pix2text")
+    package.__path__ = list(spec.submodule_search_locations)
+    package.__package__ = "pix2text"
+    sys.modules["pix2text"] = package
+
+
 def load_model():
+    _bypass_pix2text_init()
     from pix2text.latex_ocr import LatexOCR
 
     # 模型仓库只有 encoder_model.onnx / decoder_model.onnx，没有 merged 版本；
