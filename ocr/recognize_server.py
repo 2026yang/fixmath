@@ -233,7 +233,146 @@ def _bypass_pix2text_init() -> None:
     sys.modules["pix2text"] = package
 
 
+def _stub_onnx_package() -> None:
+    """Provide a harmless ``onnx`` module.
+
+    Some Windows application-control policies block ``onnx_cpp2py_export.pyd``.
+    ONNX Runtime inference does not need the Python ``onnx`` package; only a
+    few import-time constants (``onnx.TensorProto``) are referenced by
+    onnxruntime's helper modules.  A normal module with those constants avoids
+    loading the blocked DLL.
+    """
+    import importlib.machinery
+    import sys
+    import types
+
+    if "onnx" in sys.modules:
+        return
+
+    class _Dummy:
+        def __getattr__(self, _name):
+            return _Dummy()
+
+        def __call__(self, *_args, **_kwargs):
+            return _Dummy()
+
+    module = types.ModuleType("onnx")
+    for index, name in enumerate((
+        "INT64", "INT32", "FLOAT", "FLOAT16", "BFLOAT16", "BOOL", "UINT8",
+        "INT8", "DOUBLE", "INT16", "UINT16", "UINT32", "UINT64",
+        "COMPLEX64", "COMPLEX128", "FLOAT8E4M3FN", "FLOAT8E4M3FNUZ",
+        "FLOAT8E5M2", "FLOAT8E5M2FNUZ", "FLOAT4E2M1", "INT4", "UINT4",
+        "STRING",
+    )):
+        setattr(module, name, index)
+    module.__version__ = "0.0.0"
+    module.__spec__ = importlib.machinery.ModuleSpec("onnx", None)
+    module.__loader__ = None
+    module.__package__ = "onnx"
+    module.__path__ = []
+    module.__getattr__ = lambda _name: _Dummy()
+    sys.modules["onnx"] = module
+
+
+def _stub_transformers_onnx() -> None:
+    """Prevent transformers model configs from importing the ``onnx`` package.
+
+    Importing ``optimum.exporters.tasks`` loads every transformers config,
+    including Whisper's, which imports ``transformers.onnx``; that in turn
+    imports the native ``onnx`` module.  The model is only used for ONNX
+    Runtime inference, so the export config classes are never needed.
+    """
+    import sys
+    import types
+
+    try:
+        import transformers  # noqa: F401 - must exist before registering stub
+    except Exception:  # noqa: BLE001
+        return
+
+    if "transformers.onnx" in sys.modules:
+        return
+
+    class OnnxConfig:  # noqa: D401 - placeholder
+        pass
+
+    class OnnxConfigWithPast(OnnxConfig):
+        pass
+
+    class OnnxSeq2SeqConfigWithPast(OnnxConfig):
+        pass
+
+    module = types.ModuleType("transformers.onnx")
+    module.OnnxConfig = OnnxConfig
+    module.OnnxConfigWithPast = OnnxConfigWithPast
+    module.OnnxSeq2SeqConfigWithPast = OnnxSeq2SeqConfigWithPast
+    sys.modules["transformers.onnx"] = module
+    # transformers uses a lazy module; set the attribute too so
+    # ``from ...onnx import ...`` resolves to the stub.
+    try:
+        transformers.onnx = module
+    except Exception:  # noqa: BLE001
+        pass
+
+    # Whisper's config imports transformers.onnx; give modeling_whisper a
+    # placeholder config so it never imports the real onnx exporter.
+    whisper_name = "transformers.models.whisper.configuration_whisper"
+    if whisper_name not in sys.modules:
+        class WhisperConfig:  # noqa: D401 - placeholder
+            pass
+
+        whisper = types.ModuleType(whisper_name)
+        whisper.WhisperConfig = WhisperConfig
+        sys.modules[whisper_name] = whisper
+
+
+def _stub_optimum_export() -> None:
+    """Avoid importing the Python ``onnx`` package for inference.
+
+    ``optimum.onnxruntime`` imports ``optimum.exporters.onnx.main_export`` only
+    for exporting models; that module imports ``onnx``, whose native DLL may be
+    blocked by Windows application-control policy.  Inference only needs
+    onnxruntime, so provide a placeholder exporter.
+    """
+    import sys
+    import types
+
+    name = "optimum.exporters.onnx"
+    if name in sys.modules:
+        return
+    try:
+        import optimum.exporters  # noqa: F401
+    except Exception:  # noqa: BLE001
+        return
+    module = types.ModuleType(name)
+    module.__package__ = "optimum.exporters"
+
+    def main_export(*_args, **_kwargs):
+        raise RuntimeError("ONNX export is not available in FixMath")
+
+    module.main_export = main_export
+    sys.modules[name] = module
+
+
+def _stub_optimum_utils() -> None:
+    """Replace optimum's onnx utilities that import the Python onnx package."""
+    import sys
+    import types
+
+    name = "optimum.onnx.utils"
+    if name in sys.modules:
+        return
+    module = types.ModuleType(name)
+    module._get_model_external_data_paths = lambda *_a, **_k: []
+    module.check_model_uses_external_data = lambda *_a, **_k: False
+    sys.modules[name] = module
+
+
 def load_model():
+    _stub_onnx_package()
+    _stub_transformers_onnx()
+    _stub_optimum_export()
+    _stub_optimum_utils()
     _bypass_pix2text_init()
     from pix2text.latex_ocr import LatexOCR
 
