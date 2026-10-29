@@ -123,6 +123,24 @@ if ([string]::IsNullOrWhiteSpace($missing)) {
     Write-Host "依赖安装完成。" -ForegroundColor Green
 }
 
+# ---------------------------------------------------------------- torch
+Write-Step "检查 torch / torchvision 兼容性"
+
+& $py @pyArgs -c "import torch, torchvision; print('torch', torch.__version__, 'torchvision', torchvision.__version__)"
+if ($LASTEXITCODE -ne 0) {
+    if ($CheckOnly) {
+        Write-Host "torch/torchvision 不兼容（CheckOnly 模式不修复）。" -ForegroundColor Yellow
+    } else {
+        Write-Host "torch/torchvision 版本不匹配，安装兼容版本……" -ForegroundColor Yellow
+        & $py @pyArgs -m pip install --force-reinstall "torch==2.5.1" "torchvision==0.20.1"
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "torch/torchvision 修复失败，请检查网络。" -ForegroundColor Red
+        }
+    }
+} else {
+    Write-Host "torch/torchvision 版本匹配。" -ForegroundColor Green
+}
+
 # ---------------------------------------------------------------- OCR model
 Write-Step "检查 OCR 模型"
 

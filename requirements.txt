@@ -1,4 +1,8 @@
 pix2text>=1.1
+# Keep torch/torchvision in lockstep; mismatched wheels raise
+# "operator torchvision::nms does not exist" on import.
+torch==2.5.1
+torchvision==0.20.1
 onnxruntime>=1.17
 cnstd
 cnocr
