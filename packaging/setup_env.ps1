@@ -17,31 +17,83 @@ Write-Host "目录：$root"
 # ---------------------------------------------------------------- Python
 Write-Step "检查 Python 3.11"
 
-$py = $null
-$pyArgs = @()
-try {
-    & py -3.11 -c "import sys; print(sys.version)" *> $null
-    if ($LASTEXITCODE -eq 0) {
-        $py = "py"
-        $pyArgs = @("-3.11")
-    }
-} catch { }
+function Find-Python311 {
+    try {
+        & py -3.11 -c "import sys; print(sys.version)" *> $null
+        if ($LASTEXITCODE -eq 0) {
+            return @{ Exe = "py"; Args = @("-3.11") }
+        }
+    } catch { }
 
-if (-not $py) {
+    $candidates = @(
+        (Join-Path $env:LOCALAPPDATA "Programs\Python\Python311\python.exe"),
+        (Join-Path $env:ProgramFiles "Python311\python.exe"),
+        (Join-Path ${env:ProgramFiles(x86)} "Python311\python.exe")
+    )
+    foreach ($exe in $candidates) {
+        if (Test-Path $exe) {
+            return @{ Exe = $exe; Args = @() }
+        }
+    }
+
     try {
         $ver = & python -c "import sys; print(f'{sys.version_info.major}.{sys.version_info.minor}')" 2>$null
         if ($ver -eq "3.11") {
-            $py = "python"
+            return @{ Exe = "python"; Args = @() }
         }
     } catch { }
+    return $null
 }
 
-if (-not $py) {
-    Write-Host "未找到 Python 3.11。" -ForegroundColor Red
-    Write-Host "请先安装：https://www.python.org/downloads/release/python-3119/"
+$found = Find-Python311
+
+if (-not $found) {
+    if ($CheckOnly) {
+        Write-Host "未找到 Python 3.11（CheckOnly 模式不安装）。" -ForegroundColor Red
+        exit 1
+    }
+
+    Write-Host "未找到 Python 3.11，开始自动下载安装……" -ForegroundColor Yellow
+    $url = "https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
+    $installer = Join-Path $env:TEMP "python-3.11.9-amd64.exe"
+    try {
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Write-Host "下载：$url"
+        Invoke-WebRequest -Uri $url -OutFile $installer -UseBasicParsing
+    } catch {
+        Write-Host "直接下载失败，尝试 curl……" -ForegroundColor Yellow
+        & curl.exe -L --fail --output $installer $url
+    }
+
+    if (-not (Test-Path $installer)) {
+        Write-Host "Python 安装包下载失败。" -ForegroundColor Red
+        Write-Host "请手动下载安装：$url"
+        Write-Host "安装时勾选 Add python.exe to PATH，然后重新双击本文件。"
+        exit 1
+    }
+
+    Write-Host "正在安装 Python 3.11（当前用户，无需管理员）……"
+    $proc = Start-Process -FilePath $installer -Wait -PassThru -ArgumentList @(
+        "/quiet", "InstallAllUsers=0", "PrependPath=1",
+        "Include_launcher=1", "Include_test=0", "Include_pip=1"
+    )
+    Write-Host "安装程序退出码：$($proc.ExitCode)"
+
+    # Refresh PATH for this process from the registry, then look again.
+    $env:Path = [Environment]::GetEnvironmentVariable("Path", "User") + ";" +
+                [Environment]::GetEnvironmentVariable("Path", "Machine")
+    $found = Find-Python311
+}
+
+if (-not $found) {
+    Write-Host "Python 3.11 安装后仍未找到。" -ForegroundColor Red
+    Write-Host "请手动下载安装：https://www.python.org/ftp/python/3.11.9/python-3.11.9-amd64.exe"
     Write-Host "安装时勾选 Add python.exe to PATH，然后重新双击本文件。"
     exit 1
 }
+
+$py = $found.Exe
+$pyArgs = $found.Args
 
 $version = & $py @pyArgs -c "import sys; print(sys.version.split()[0])"
 Write-Host "Python $version 已找到。"

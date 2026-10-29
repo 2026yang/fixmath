@@ -67,7 +67,7 @@ vendor\
 
 脚本会自动：
 
-1. 检查 Python 3.11；
+1. 检查 Python 3.11，**缺失时自动下载并静默安装**（当前用户，无需管理员）；
 2. 检查依赖，缺失时执行 `pip install -r requirements.txt`；
 3. 检查 OCR 模型，缺失时自动下载；
 4. **已安装的部分直接提示“已安装”**，不会重复安装。
@@ -120,7 +120,9 @@ py -3.11 fixmath_app.py
 
 ### 双击 `安装依赖.bat` 提示找不到 Python
 
-安装 Python 3.11：
+正常情况下脚本会自动下载并安装 Python 3.11。
+
+如果自动安装失败，再手动安装：
 
 ```
 https://www.python.org/downloads/release/python-3119/
