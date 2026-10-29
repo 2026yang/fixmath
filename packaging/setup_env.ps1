@@ -136,7 +136,7 @@ if ($modelOk) {
     Write-Host "OCR 模型未安装：$modelDir（CheckOnly 模式不下载）" -ForegroundColor Yellow
 } else {
     Write-Host "OCR 模型未找到，开始下载（约 100 MB）……" -ForegroundColor Yellow
-    & $py @pyArgs -c "from pix2text.latex_ocr import LatexOCR; LatexOCR(model_backend='onnx', device='cpu', more_model_configs={'use_merged': False, 'use_cache': False})"
+    & $py @pyArgs (Join-Path $root "packaging\download_model.py")
     if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $modelDir "encoder_model.onnx"))) {
         Write-Host "模型下载失败，请检查网络后重试。" -ForegroundColor Red
         exit 1

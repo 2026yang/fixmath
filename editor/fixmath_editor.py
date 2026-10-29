@@ -1042,10 +1042,19 @@ class Editor:
         self._copy_png_bytes(self._transparent_png(path), "框选透明图")
 
     def _shortcut_actions(self):
-        # Only the screenshot hotkey is global.  Everything else is a normal
-        # button in the editor; no extra system-wide shortcuts are registered.
         return [
             ("capture", "截图（左键选中后按）", lambda: None),
+            ("copy_inline", "复制 $…$", self.copy_inline),
+            ("copy_plain", "复制纯 LaTeX", self.copy_plain),
+            ("copy_raw", "复制原透明图", self.copy_raw_image),
+            ("copy_box", "复制框选透明图", self.copy_box_image),
+            ("copy_mathtype", "复制为 MathType 公式", self.copy_mathtype_shortcut),
+            ("save", "保存", self.save),
+            ("ocr_clipboard", "从剪贴板识别", self.ocr_clipboard),
+            ("manual_crop", "手动框选", self.manual_crop),
+            ("fix_nu", "ν→v", self.fix_nu),
+            ("ocr_raw", "识别原图", lambda: self._ocr_image("raw")),
+            ("ocr_box", "识别框选图", lambda: self._ocr_image("box")),
         ]
 
     @staticmethod
