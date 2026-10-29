@@ -159,13 +159,28 @@ def spawn(role: str) -> subprocess.Popen:
     else:
         cmd = [sys.executable, str(BASE / "fixmath_app.py"), "--role", role]
     flags = CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
-    # No console for the OCR/capture children; their logs go to files.
-    return subprocess.Popen(
-        cmd,
-        creationflags=flags,
-        stdout=subprocess.DEVNULL,
-        stderr=subprocess.DEVNULL,
-    )
+    # Keep OCR tracebacks in a file; otherwise a startup crash is silent.
+    log_handle = None
+    if role == "ocr":
+        try:
+            logs = data_dir() / "logs"
+            logs.mkdir(parents=True, exist_ok=True)
+            log_handle = open(logs / "ocr-role.log", "a", encoding="utf-8",
+                              buffering=1)
+        except OSError:
+            log_handle = None
+    stdout = log_handle if log_handle is not None else subprocess.DEVNULL
+    stderr = subprocess.STDOUT if log_handle is not None else subprocess.DEVNULL
+    try:
+        return subprocess.Popen(
+            cmd,
+            creationflags=flags,
+            stdout=stdout,
+            stderr=stderr,
+        )
+    finally:
+        if log_handle is not None:
+            log_handle.close()
 
 
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
