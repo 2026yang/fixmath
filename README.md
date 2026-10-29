@@ -1,22 +1,22 @@
 # FixMath
 
-离线公式截图工具：在任意程序中选中公式，按 `Ctrl+Alt+7`，得到可复制的 LaTeX，或直接粘贴为 MathType 公式。全程不联网。
+离线公式截图工具：在任意程序中选中公式，按 `Ctrl+Alt+7`，得到可复制的 LaTeX，或粘贴为 MathType 公式。识别全程在本机完成，不上传图片。
+
+> 当前只提供**源码运行**方式，暂未发布预编译 exe。源码 ZIP 需要 Python 3.11；双击 `安装依赖.bat` 会自动准备环境。
 
 ## 功能
 
 - 任意程序里左键选中公式，按 `Ctrl+Alt+7` 截图识别；
-- 浏览器模式：自动处理网页选区，手动框选可缩放/平移；
+- 浏览器模式：自动处理网页选区；手动框选可缩放/平移；
 - 清洗图 / 框选图双视图，点击任一图重新识别；
-- LaTeX 实时预览（复杂结构自动跳过，避免卡顿）；
+- LaTeX 实时预览（复杂结构自动跳过，不卡界面）；
 - 一键复制 `$…$`、纯 LaTeX、透明公式图；
 - 复制为 MathType 公式（需要本机安装 MathType）；
 - 历史记录、搜索、保留条数、清空记录；
 - 系统托盘、开机自启、诊断日志；
 - 完全离线：本地 Pix2Text ONNX 模型。
 
-## 快捷键
-
-默认且**唯一**的全局快捷键：
+## 唯一快捷键
 
 ```
 Ctrl+Alt+7   截图识别
@@ -24,57 +24,86 @@ Ctrl+Alt+7   截图识别
 
 其他操作都是编辑器里的按钮，不注册系统级快捷键，避免和 WPS/浏览器冲突。
 
-## 安装
+## 环境要求
 
-### 发布版（推荐，解压即用）
+| 条件 | 说明 |
+|---|---|
+| Windows 10/11 64 位 | 使用了 Win32 钩子与 DPI 接口 |
+| Python 3.11 | 源码运行必需 |
+| 磁盘约 8 GB | Python 依赖 + torch + 模型 |
+| 网络 | 仅首次安装依赖/下载模型时需要 |
 
-从 [Releases](../../releases) 下载 `FixMath-x.y.z.zip`，完整解压后双击：
+## 快速开始
+
+### 1. 下载源码
 
 ```
-FixMath.exe
+https://github.com/2026yang/fixmath/archive/refs/heads/main.zip
 ```
 
-发布 zip 已经包含：
+或在 GitHub 页面点 `Code → Download ZIP`。
 
-- Python 运行时与依赖（`_internal`）；
-- OCR 模型（`models\pix2text`）；
-- `run_fixmath.bat` 启动入口。
+解压后目录里应有：
 
-**不需要安装 Python，也不需要单独准备模型。**
-
-首次启动会加载本地 OCR 模型，约 5–10 秒。
-
-### 从源码运行（开发者）
-
-> GitHub 的 `Code → Download ZIP` 下载的是**源码**，不能直接运行；它不包含 Python 运行时和模型权重。
-
-```powershell
-git clone https://github.com/2026yang/fixmath.git
-cd fixmath
-py -3.11 -m venv .venv
-.venv\Scripts\activate
-pip install -r requirements.txt
-python fixmath_app.py
+```
+安装依赖.bat
+run_fixmath.bat
+fixmath_app.py
+requirements.txt
+capture\
+editor\
+ocr\
+packaging\
+vendor\
 ```
 
-或双击 `run_fixmath.bat`。源码版首次运行会从 `%APPDATA%\pix2text` 读取模型，缺失时联网下载。
+### 2. 双击安装依赖
 
-#### 源码一键安装
-
-不想手动敲命令时，双击根目录：
+双击：
 
 ```
 安装依赖.bat
 ```
 
-脚本会：
+脚本会自动：
 
 1. 检查 Python 3.11；
-2. 检查并安装 `requirements.txt` 依赖；
+2. 检查依赖，缺失时执行 `pip install -r requirements.txt`；
 3. 检查 OCR 模型，缺失时自动下载；
-4. 已安装的部分直接提示“已安装”，不会重复安装。
+4. **已安装的部分直接提示“已安装”**，不会重复安装。
 
-安装完成后双击 `run_fixmath.bat` 启动。
+### 3. 启动
+
+双击：
+
+```
+run_fixmath.bat
+```
+
+首次启动会加载 OCR 模型，约 5–10 秒。
+
+### 4. 使用
+
+1. 在 WPS / 浏览器 / PDF 里选中公式；
+2. 按 `Ctrl+Alt+7`；
+3. 编辑器里复制 LaTeX，或点“复制为 MathType 公式”。
+
+## 手动安装（可选）
+
+如果不想用 `安装依赖.bat`：
+
+```powershell
+py -3.11 -m pip install -r requirements.txt
+py -3.11 fixmath_app.py
+```
+
+模型目录：
+
+```
+%APPDATA%\pix2text\1.1\mfr-1.5-onnx
+```
+
+缺失时首次识别会自动下载。
 
 ## 数据目录
 
@@ -83,61 +112,75 @@ python fixmath_app.py
 | 配置 | `%LOCALAPPDATA%\FixMath\config.json` |
 | 截图历史 | `%LOCALAPPDATA%\FixMath\captures` |
 | 日志 | `%LOCALAPPDATA%\FixMath\logs` |
-| OCR 模型（发布版） | 程序目录 `models\pix2text` |
-| OCR 模型（源码版） | `%APPDATA%\pix2text` |
+| OCR 模型 | `%APPDATA%\pix2text` |
 
 `设置 → 清空所有记录` 可删除全部历史。
 
-## 构建 exe
+## 常见问题
+
+### 双击 `安装依赖.bat` 提示找不到 Python
+
+安装 Python 3.11：
+
+```
+https://www.python.org/downloads/release/python-3119/
+```
+
+安装时勾选 **Add python.exe to PATH**，然后重新双击。
+
+### 模型下载失败
+
+通常是网络无法访问 HuggingFace。可以：
+
+- 换网络后重试；
+- 或从另一台已安装的电脑复制模型目录：
+  ```
+  %APPDATA%\pix2text\1.1\mfr-1.5-onnx
+  ```
+  到新电脑同一位置。
+
+### `Ctrl+Alt+7` 没反应
+
+- 确认 `run_fixmath.bat` 仍在运行；
+- 如果 WPS/浏览器以管理员身份运行，FixMath 也需要以管理员身份运行；
+- 输入法可能占用 `Ctrl+Alt+数字`，可在编辑器“快捷键”里换组合。
+
+### MathType 复制失败
+
+“复制为 MathType 公式”需要：
+
+- Windows 桌面版 MathType 6.9 / 7.x；
+- WPS 已安装 MathType 加载项。
+
+普通 LaTeX 复制不需要 MathType。
+
+## 开发与构建
 
 ```powershell
 pip install pyinstaller pystray
 powershell -ExecutionPolicy Bypass -File packaging\build.ps1
 ```
 
-产物：`dist\FixMath\FixMath.exe`（整个 `dist\FixMath` 需一起分发）。
-
-模型权重不随 exe 打包，首次运行从 `%APPDATA%\pix2text` 读取或下载。
-
-## 发布新版本（更新机制）
-
-更新检查使用 GitHub Releases：
-
-1. 修改 `version.py` 里的 `__version__` 和 `GITHUB_REPO`；
-2. 构建 exe；
-3. 打 tag 并发布 Release：
-
-```powershell
-git tag v0.1.1
-git push origin v0.1.1
-gh release create v0.1.1 dist\FixMath-Setup-0.1.1.exe --title "v0.1.1" --notes "fix: ..."
-```
-
-客户端在 `设置 → 检查更新` 中查询 `releases/latest`，比较版本后打开下载页。
-
-发布包建议包含：
-
-- `FixMath-Setup-x.y.z.exe`（Inno Setup，见 `packaging/fixmath.iss`）；
-- 或 `FixMath-x.y.z.zip`（整个 onedir）。
+产物在 `dist\FixMath`。当前仓库不发布预编译 exe，构建仅供本地验证。
 
 ## 目录结构
 
 ```
-capture/      截图助手（Win32 钩子 + 区域截图）
-editor/       Tk 编辑器
-ocr/          本地 OCR HTTP 服务
-packaging/    PyInstaller / Inno Setup 脚本
-vendor/       latex2mathml 与公式检测模型
-version.py    版本号 + GitHub 仓库
-update_checker.py
+fixmath/
+├── 安装依赖.bat        源码环境安装
+├── run_fixmath.bat     启动入口
+├── fixmath_app.py      启动器
+├── mathtype_bridge.py  MathType 转换
+├── tray_win32.py       原生托盘
+├── version.py          版本号
+├── update_checker.py   更新检查（预留）
+├── capture/            截图助手
+├── editor/             Tk 编辑器
+├── ocr/                本地 OCR 服务
+├── packaging/          构建脚本
+├── vendor/             latex2mathml、模型说明
+└── .github/workflows/  CI
 ```
-
-## 已知限制
-
-- 免费离线模型对复杂表格、矩阵、多行对齐仍可能漏项；
-- 浏览器白字蓝底选区需要先取消选中；
-- MathType 公式依赖本机安装的 MathType；
-- 长文本混排（文字 + 公式）尚未实现。
 
 ## 许可证
 
