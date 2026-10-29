@@ -150,12 +150,22 @@ def run_role(role: str) -> int:
     return 2
 
 
+CREATE_NO_WINDOW = 0x08000000
+
+
 def spawn(role: str) -> subprocess.Popen:
     if getattr(sys, "frozen", False):
         cmd = [sys.executable, "--role", role]
     else:
         cmd = [sys.executable, str(BASE / "fixmath_app.py"), "--role", role]
-    return subprocess.Popen(cmd, creationflags=CREATE_NEW_PROCESS_GROUP)
+    flags = CREATE_NEW_PROCESS_GROUP | CREATE_NO_WINDOW
+    # No console for the OCR/capture children; their logs go to files.
+    return subprocess.Popen(
+        cmd,
+        creationflags=flags,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
 
 
 RUN_KEY = r"Software\Microsoft\Windows\CurrentVersion\Run"
