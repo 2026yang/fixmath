@@ -166,18 +166,25 @@ if ($LASTEXITCODE -ne 0) {
 # ---------------------------------------------------------------- OCR model
 Write-Step "检查 OCR 模型"
 
+$bundledDir = Join-Path $root "vendor\pix2text\1.1\mfr-1.5-onnx"
 $modelDir = Join-Path $env:APPDATA "pix2text\1.1\mfr-1.5-onnx"
-$modelOk = (Test-Path (Join-Path $modelDir "encoder_model.onnx")) -and
-           (Test-Path (Join-Path $modelDir "decoder_model.onnx"))
 
-if ($modelOk) {
+function Test-Model([string]$dir) {
+    return (Test-Path (Join-Path $dir "encoder_model.onnx")) -and
+           (Test-Path (Join-Path $dir "decoder_model.onnx"))
+}
+
+if (Test-Model $bundledDir) {
+    Write-Host "OCR 模型已内置在源码中：$bundledDir" -ForegroundColor Green
+    Write-Host "无需下载，可直接运行。" -ForegroundColor Green
+} elseif (Test-Model $modelDir) {
     Write-Host "OCR 模型已安装：$modelDir" -ForegroundColor Green
 } elseif ($CheckOnly) {
     Write-Host "OCR 模型未安装：$modelDir（CheckOnly 模式不下载）" -ForegroundColor Yellow
 } else {
     Write-Host "OCR 模型未找到，开始下载（约 100 MB）……" -ForegroundColor Yellow
     & $py @pyArgs (Join-Path $root "packaging\download_model.py")
-    if ($LASTEXITCODE -ne 0 -or -not (Test-Path (Join-Path $modelDir "encoder_model.onnx"))) {
+    if ($LASTEXITCODE -ne 0 -or -not (Test-Model $modelDir)) {
         Write-Host "模型下载失败，请检查网络后重试。" -ForegroundColor Red
         exit 1
     }
