@@ -69,7 +69,7 @@ vendor\
 
 1. 检查 Python 3.11，**缺失时自动下载并静默安装**（当前用户，无需管理员）；
 2. 检查依赖，缺失时执行 `pip install -r requirements.txt`；
-3. 检查 OCR 模型，缺失时自动下载；
+3. 检查 OCR 模型：**源码已内置**，直接使用；只有模型缺失时才下载；
 4. **已安装的部分直接提示“已安装”**，不会重复安装。
 
 ### 3. 启动
@@ -97,13 +97,19 @@ py -3.11 -m pip install -r requirements.txt
 py -3.11 fixmath_app.py
 ```
 
-模型目录：
+模型优先从源码目录读取：
+
+```
+vendor\pix2text\1.1\mfr-1.5-onnx
+```
+
+源码 ZIP 已包含该模型，正常不需要下载。只有手动删除了模型时，才会回退到：
 
 ```
 %APPDATA%\pix2text\1.1\mfr-1.5-onnx
 ```
 
-缺失时首次识别会自动下载。
+仍缺失时首次识别会自动下载。
 
 ## 数据目录
 
@@ -112,7 +118,7 @@ py -3.11 fixmath_app.py
 | 配置 | `%LOCALAPPDATA%\FixMath\config.json` |
 | 截图历史 | `%LOCALAPPDATA%\FixMath\captures` |
 | 日志 | `%LOCALAPPDATA%\FixMath\logs` |
-| OCR 模型 | `%APPDATA%\pix2text` |
+| OCR 模型 | 源码 `vendor\pix2text`；回退 `%APPDATA%\pix2text` |
 
 `设置 → 清空所有记录` 可删除全部历史。
 
