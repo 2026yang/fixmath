@@ -2,7 +2,7 @@
     [switch]$CheckOnly
 )
 
-$ErrorActionPreference = "Stop"
+$ErrorActionPreference = "Continue"
 $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
@@ -126,7 +126,7 @@ if ([string]::IsNullOrWhiteSpace($missing)) {
 # ---------------------------------------------------------------- torch
 Write-Step "检查 torch / torchvision 兼容性"
 
-& $py @pyArgs -c "import torch, torchvision; print('torch', torch.__version__, 'torchvision', torchvision.__version__)"
+& $py @pyArgs -c "import torch, torchvision; print('torch', torch.__version__, 'torchvision', torchvision.__version__)" 2>$null
 if ($LASTEXITCODE -ne 0) {
     if ($CheckOnly) {
         Write-Host "torch/torchvision 不兼容（CheckOnly 模式不修复）。" -ForegroundColor Yellow
@@ -144,7 +144,7 @@ if ($LASTEXITCODE -ne 0) {
 # ---------------------------------------------------------------- OCR deps
 Write-Step "检查 OCR 依赖兼容性"
 
-& $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" *> $null
+& $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" 2>$null | Out-Null
 if ($LASTEXITCODE -ne 0) {
     if ($CheckOnly) {
         Write-Host "rapidocr/cnstd 版本不兼容（CheckOnly 模式不修复）。" -ForegroundColor Yellow
@@ -152,7 +152,7 @@ if ($LASTEXITCODE -ne 0) {
         Write-Host "rapidocr 版本不兼容，安装固定版本……" -ForegroundColor Yellow
         & $py @pyArgs -m pip install --force-reinstall `
             "rapidocr==3.9.2" "cnstd==1.2.8" "cnocr==2.3.3" "pix2text==1.1.7"
-        & $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" *> $null
+        & $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" 2>$null | Out-Null
         if ($LASTEXITCODE -ne 0) {
             Write-Host "OCR 依赖修复失败，请检查网络。" -ForegroundColor Red
         } else {
