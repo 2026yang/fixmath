@@ -26,13 +26,27 @@ Ctrl+Alt+7   截图识别
 
 ## 安装
 
-### 发布版
+### 发布版（推荐，解压即用）
 
-从 [Releases](../../releases) 下载 `FixMath-Setup-x.y.z.exe`（或 `FixMath-x.y.z.zip`），解压后运行 `FixMath.exe`。
+从 [Releases](../../releases) 下载 `FixMath-x.y.z.zip`，完整解压后双击：
+
+```
+FixMath.exe
+```
+
+发布 zip 已经包含：
+
+- Python 运行时与依赖（`_internal`）；
+- OCR 模型（`models\pix2text`）；
+- `run_fixmath.bat` 启动入口。
+
+**不需要安装 Python，也不需要单独准备模型。**
 
 首次启动会加载本地 OCR 模型，约 5–10 秒。
 
-### 从源码运行
+### 从源码运行（开发者）
+
+> GitHub 的 `Code → Download ZIP` 下载的是**源码**，不能直接运行；它不包含 Python 运行时和模型权重。
 
 ```powershell
 git clone https://github.com/2026yang/fixmath.git
@@ -43,7 +57,7 @@ pip install -r requirements.txt
 python fixmath_app.py
 ```
 
-或双击 `run_fixmath.bat`。
+或双击 `run_fixmath.bat`。源码版首次运行会从 `%APPDATA%\pix2text` 读取模型，缺失时联网下载。
 
 ## 数据目录
 
@@ -52,7 +66,8 @@ python fixmath_app.py
 | 配置 | `%LOCALAPPDATA%\FixMath\config.json` |
 | 截图历史 | `%LOCALAPPDATA%\FixMath\captures` |
 | 日志 | `%LOCALAPPDATA%\FixMath\logs` |
-| OCR 模型 | `%APPDATA%\pix2text` |
+| OCR 模型（发布版） | 程序目录 `models\pix2text` |
+| OCR 模型（源码版） | `%APPDATA%\pix2text` |
 
 `设置 → 清空所有记录` 可删除全部历史。
 

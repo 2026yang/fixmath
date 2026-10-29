@@ -14,6 +14,7 @@ import hashlib
 import io
 import json
 import os
+import sys
 import threading
 import time
 from collections import OrderedDict
@@ -188,17 +189,39 @@ def _patch_transformers_doc() -> None:
 _patch_transformers_doc()
 
 
+def _bundled_model_root():
+    """Return a model root shipped next to the exe, if present."""
+    candidates = []
+    env = os.environ.get("FIXMATH_MODELS")
+    if env:
+        candidates.append(Path(env))
+    if getattr(sys, "frozen", False):
+        base = Path(sys.executable).resolve().parent
+    else:
+        base = Path(__file__).resolve().parent.parent
+    candidates.extend([base / "models" / "pix2text", base / "vendor" / "pix2text"])
+    for root in candidates:
+        if (root / "1.1" / "mfr-1.5-onnx").is_dir():
+            return root
+    return None
+
+
 def load_model():
     from pix2text.latex_ocr import LatexOCR
 
     # 模型仓库只有 encoder_model.onnx / decoder_model.onnx，没有 merged 版本；
     # 必须显式关闭 merged 与 kv-cache，否则新版 optimum 会去找
     # decoder_model_merged.onnx 并报错。
-    return LatexOCR(
-        model_backend="onnx",
-        device="cpu",
-        more_model_configs={"use_merged": False, "use_cache": False},
-    )
+    kwargs = {
+        "model_backend": "onnx",
+        "device": "cpu",
+        "more_model_configs": {"use_merged": False, "use_cache": False},
+    }
+    root = _bundled_model_root()
+    if root is not None:
+        print(f"[ocr] using bundled models: {root}", flush=True)
+        kwargs["root"] = str(root)
+    return LatexOCR(**kwargs)
 
 
 class Handler(BaseHTTPRequestHandler):

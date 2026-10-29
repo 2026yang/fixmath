@@ -3,7 +3,7 @@
 ; 2) open this file in Inno Setup Compiler and press Compile.
 
 #define AppName "FixMath"
-#define AppVersion "0.1.0"
+#define AppVersion "0.1.1"
 #define AppExe "FixMath.exe"
 
 [Setup]

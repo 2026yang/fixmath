@@ -32,6 +32,16 @@ jobs:
       - name: Build
         run: python -m PyInstaller packaging/fixmath.spec --noconfirm
 
+      - name: Bundle OCR model
+        shell: pwsh
+        run: |
+          python packaging/download_model.py
+          $src = Join-Path $env:APPDATA "pix2text\1.1\mfr-1.5-onnx"
+          $dst = Join-Path "dist\FixMath\models\pix2text\1.1" "mfr-1.5-onnx"
+          New-Item -ItemType Directory -Force -Path (Split-Path $dst -Parent) | Out-Null
+          Copy-Item $src $dst -Recurse -Force
+          Copy-Item "packaging\run_portable.bat" "dist\FixMath\run_fixmath.bat" -Force
+
       - name: Zip
         shell: pwsh
         run: |
