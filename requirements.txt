@@ -1,12 +1,14 @@
-pix2text>=1.1
+pix2text==1.1.7
+cnstd==1.2.8
+cnocr==2.3.3
+rapidocr==3.9.2
+
 # Keep torch/torchvision in lockstep; mismatched wheels raise
 # "operator torchvision::nms does not exist" on import.
 torch==2.5.1
 torchvision==0.20.1
+
 onnxruntime>=1.17
-cnstd
-cnocr
-rapidocr
 optimum
 transformers
 scipy

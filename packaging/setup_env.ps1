@@ -141,6 +141,28 @@ if ($LASTEXITCODE -ne 0) {
     Write-Host "torch/torchvision 版本匹配。" -ForegroundColor Green
 }
 
+# ---------------------------------------------------------------- OCR deps
+Write-Step "检查 OCR 依赖兼容性"
+
+& $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" *> $null
+if ($LASTEXITCODE -ne 0) {
+    if ($CheckOnly) {
+        Write-Host "rapidocr/cnstd 版本不兼容（CheckOnly 模式不修复）。" -ForegroundColor Yellow
+    } else {
+        Write-Host "rapidocr 版本不兼容，安装固定版本……" -ForegroundColor Yellow
+        & $py @pyArgs -m pip install --force-reinstall `
+            "rapidocr==3.9.2" "cnstd==1.2.8" "cnocr==2.3.3" "pix2text==1.1.7"
+        & $py @pyArgs -c "from rapidocr.utils.model_resolver import resolve_model_key; print('rapidocr ok')" *> $null
+        if ($LASTEXITCODE -ne 0) {
+            Write-Host "OCR 依赖修复失败，请检查网络。" -ForegroundColor Red
+        } else {
+            Write-Host "OCR 依赖已修复。" -ForegroundColor Green
+        }
+    }
+} else {
+    Write-Host "OCR 依赖版本兼容。" -ForegroundColor Green
+}
+
 # ---------------------------------------------------------------- OCR model
 Write-Step "检查 OCR 模型"
 
