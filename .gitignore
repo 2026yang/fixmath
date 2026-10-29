@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Build output
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+
+# Local dependencies / experiment output
+.deps/
+*.log
+ocr_out.txt
+ocr_err.txt
+build_log*.txt
+
+# Model weights are downloaded on first use and are not committed.
+vendor/pix2text/1.1/
+
+# IDE / OS
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini

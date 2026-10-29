@@ -1,0 +1,14 @@
+pix2text>=1.1
+onnxruntime>=1.17
+cnstd
+cnocr
+rapidocr
+optimum
+transformers
+scipy
+pymupdf
+numpy
+Pillow
+matplotlib
+pystray
+pyinstaller
