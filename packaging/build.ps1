@@ -15,8 +15,11 @@ py -3.11 -m PyInstaller packaging\fixmath.spec --noconfirm --clean
 $dist = Join-Path $root "dist\FixMath"
 
 # Bundle the OCR model so the portable zip works on a machine without
-# %APPDATA%\pix2text.
-$modelSrc = Join-Path $env:APPDATA "pix2text\1.1\mfr-1.5-onnx"
+# %APPDATA%\pix2text.  Prefer the copy already committed in vendor\.
+$modelSrc = Join-Path $root "vendor\pix2text\1.1\mfr-1.5-onnx"
+if (-not (Test-Path $modelSrc)) {
+    $modelSrc = Join-Path $env:APPDATA "pix2text\1.1\mfr-1.5-onnx"
+}
 if (Test-Path $modelSrc) {
     $modelDst = Join-Path $dist "models\pix2text\1.1\mfr-1.5-onnx"
     New-Item -ItemType Directory -Force -Path (Split-Path $modelDst -Parent) | Out-Null

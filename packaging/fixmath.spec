@@ -5,9 +5,8 @@ Build from the repository root:
     py -3.11 -m pip install pyinstaller
     pyinstaller packaging/fixmath.spec --noconfirm
 
-The model weights are NOT bundled: pix2text stores them under
-%APPDATA%\\pix2text.  For a public installer either ship that folder as an
-extra data directory or add a first-run downloader.
+The model weights are bundled by build.ps1 into
+dist\\FixMath\\models\\pix2text and read by recognize_server at runtime.
 """
 
 from pathlib import Path
